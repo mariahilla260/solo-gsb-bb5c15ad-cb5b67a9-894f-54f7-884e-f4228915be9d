@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { isAbsent, type JsonValue, type SideValue } from '../merge/types';
 import type { Conflict, Resolution, Resolutions } from '../merge/threeWayMerge';
+import { isIdentityMergeEligible } from '../merge/identityArrayMerge';
+import IdentityMergePanel, {
+  emptyIdentityDraft,
+  type IdentityMergeDraft,
+} from './IdentityMergePanel';
 
 interface Props {
   conflicts: Conflict[];
@@ -26,6 +31,8 @@ export default function ConflictPanel({ conflicts, resolutions, selectedId, onSe
 
   const [customText, setCustomText] = useState('');
   const [customError, setCustomError] = useState<string | null>(null);
+  // 「按身份字段合并」的未提交草稿，按冲突 id 分别保留（切换冲突不丢失逐项裁决进度）
+  const [identityDrafts, setIdentityDrafts] = useState<Record<string, IdentityMergeDraft>>({});
 
   const committed = conflict ? resolutions[conflict.id] : undefined;
   // 当前冲突已提交选择的签名：切换冲突、撤销/重做或批量应用导致选择变化时重新同步输入框
@@ -66,6 +73,16 @@ export default function ConflictPanel({ conflicts, resolutions, selectedId, onSe
 
   const choiceClass = (kind: Resolution['kind']) =>
     current?.kind === kind ? ' active-choice' : '';
+
+  // 身份合并草稿与当前冲突的三方值绑定：重新合并出现同 id 但内容不同的冲突时不会误用旧草稿
+  const identitySignature = JSON.stringify([conflict.base, conflict.ours, conflict.theirs]);
+  const storedDraft = identityDrafts[conflict.id];
+  const identityDraft =
+    storedDraft && storedDraft.signature === identitySignature
+      ? storedDraft
+      : emptyIdentityDraft(identitySignature);
+  const setIdentityDraft = (draft: IdentityMergeDraft) =>
+    setIdentityDrafts((prev) => ({ ...prev, [conflict.id]: draft }));
 
   return (
     <>
@@ -110,6 +127,14 @@ export default function ConflictPanel({ conflicts, resolutions, selectedId, onSe
             使用自定义值
           </button>
         </div>
+        {isIdentityMergeEligible(conflict) && (
+          <IdentityMergePanel
+            conflict={conflict}
+            draft={identityDraft}
+            onDraftChange={setIdentityDraft}
+            onSubmit={(value) => onResolve(conflict.id, { kind: 'custom', value })}
+          />
+        )}
       </div>
     </>
   );
