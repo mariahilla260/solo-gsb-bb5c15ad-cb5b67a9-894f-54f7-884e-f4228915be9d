@@ -9,7 +9,12 @@ export const SAMPLE_BASE = `{
   },
   "tags": ["web", "api"],
   "database": { "host": "db.internal", "port": 5432, "pool": 10 },
-  "deprecated": { "oldApi": true }
+  "deprecated": { "oldApi": true },
+  "services": [
+    { "id": "api", "replicas": 2, "tag": "v1" },
+    { "id": "worker", "replicas": 1, "tag": "v1" },
+    { "id": "cron", "replicas": 1, "tag": "v1" }
+  ]
 }`;
 
 export const SAMPLE_OURS = `{
@@ -23,7 +28,12 @@ export const SAMPLE_OURS = `{
   },
   "tags": ["web", "api"],
   "database": { "host": "db.internal", "port": 5432, "pool": 20 },
-  "owner": "team-a"
+  "owner": "team-a",
+  "services": [
+    { "id": "api", "replicas": 2, "tag": "v2" },
+    { "id": "cron", "replicas": 2, "tag": "v1" },
+    { "id": "ingress", "replicas": 1, "tag": "v1" }
+  ]
 }`;
 
 export const SAMPLE_THEIRS = `{
@@ -38,7 +48,13 @@ export const SAMPLE_THEIRS = `{
   "tags": ["web", "api", "v2"],
   "database": { "host": "db.internal", "port": 5433, "pool": 50 },
   "deprecated": { "oldApi": false },
-  "region": "cn-east"
+  "region": "cn-east",
+  "services": [
+    { "id": "api", "replicas": 3, "tag": "v3" },
+    { "id": "worker", "replicas": 1, "tag": "v9" },
+    { "id": "cron", "replicas": 1, "tag": "v1" },
+    { "id": "edge", "replicas": 1, "tag": "v1" }
+  ]
 }`;
 
 // RFC 6902 补丁模式示例：应用到 SAMPLE_BASE 后分别得到 SAMPLE_OURS / SAMPLE_THEIRS
@@ -49,7 +65,12 @@ export const SAMPLE_OURS_PATCH = `[
   { "op": "replace", "path": "/features/logging/level", "value": "debug" },
   { "op": "replace", "path": "/database/pool", "value": 20 },
   { "op": "add", "path": "/owner", "value": "team-a" },
-  { "op": "remove", "path": "/deprecated" }
+  { "op": "remove", "path": "/deprecated" },
+  { "op": "replace", "path": "/services", "value": [
+    { "id": "api", "replicas": 2, "tag": "v2" },
+    { "id": "cron", "replicas": 2, "tag": "v1" },
+    { "id": "ingress", "replicas": 1, "tag": "v1" }
+  ] }
 ]`;
 
 export const SAMPLE_THEIRS_PATCH = `[
@@ -60,5 +81,11 @@ export const SAMPLE_THEIRS_PATCH = `[
   { "op": "replace", "path": "/database/port", "value": 5433 },
   { "op": "replace", "path": "/database/pool", "value": 50 },
   { "op": "replace", "path": "/deprecated/oldApi", "value": false },
-  { "op": "add", "path": "/region", "value": "cn-east" }
+  { "op": "add", "path": "/region", "value": "cn-east" },
+  { "op": "replace", "path": "/services", "value": [
+    { "id": "api", "replicas": 3, "tag": "v3" },
+    { "id": "worker", "replicas": 1, "tag": "v9" },
+    { "id": "cron", "replicas": 1, "tag": "v1" },
+    { "id": "edge", "replicas": 1, "tag": "v1" }
+  ] }
 ]`;

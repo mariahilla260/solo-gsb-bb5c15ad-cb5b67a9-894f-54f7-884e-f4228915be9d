@@ -146,11 +146,26 @@ function mergeValue(
   return node;
 }
 
+/**
+ * 合并任意节点的三方值（任一侧可为 ABSENT，如按身份字段对齐数组记录）。
+ * key/segments 用于生成冲突的 JSON Pointer：数组按身份合并时以记录指针为前缀，
+ * 内部冲突指针形如「/list」+「/name」。
+ */
+export function mergeSides(
+  base: SideValue,
+  ours: SideValue,
+  theirs: SideValue,
+  key: string,
+  segments: string[],
+): MergeResult {
+  const conflicts: Conflict[] = [];
+  const root = mergeValue(base, ours, theirs, key, segments, conflicts);
+  return { root, conflicts };
+}
+
 /** 执行三方合并：base 为基线，ours 为当前分支，theirs 为目标分支 */
 export function threeWayMerge(base: JsonValue, ours: JsonValue, theirs: JsonValue): MergeResult {
-  const conflicts: Conflict[] = [];
-  const root = mergeValue(base, ours, theirs, '', [], conflicts);
-  return { root, conflicts };
+  return mergeSides(base, ours, theirs, '', []);
 }
 
 /** 根据冲突解决方案计算最终合并结果；存在未解决的冲突时返回 undefined */
